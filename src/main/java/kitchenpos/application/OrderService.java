@@ -177,17 +177,22 @@ public class OrderService {
             .orElseThrow(NoSuchElementException::new);
         final OrderType type = order.getType();
         final OrderStatus status = order.getStatus();
+        // 배달인 경우 주문 상태는 배달 완료 상태여야 한다.
         if (type == OrderType.DELIVERY) {
             if (status != OrderStatus.DELIVERED) {
                 throw new IllegalStateException();
             }
         }
+        // 포장이거나 먹고갈 경우 주문 상태는 SERVED 상태여야 한다.
         if (type == OrderType.TAKEOUT || type == OrderType.EAT_IN) {
             if (status != OrderStatus.SERVED) {
                 throw new IllegalStateException();
             }
         }
+        // 이상 없으면 주문 상태는 완료로 변경
         order.setStatus(OrderStatus.COMPLETED);
+        // 매장 식사일 경우 주문이 완료되지 않은 테이블이 있으면 자리를 비운다?
+        // 애초에 완료 처리를 하는 것이기 떄문에 조건없이 무조건 ooupied를 false로 하는게 맞지 않나?
         if (type == OrderType.EAT_IN) {
             final OrderTable orderTable = order.getOrderTable();
             if (!orderRepository.existsByOrderTableAndStatusNot(orderTable, OrderStatus.COMPLETED)) {
