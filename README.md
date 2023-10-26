@@ -56,7 +56,12 @@ docker compose -p kitchenpos up -d
   - [ ] 주문 타입이 배달이 아니면 배달 요청을 하지 않고, 주문 상태만 승인(ACCEPTED)상태가 된다.
 - [ ] 서빙
   - [ ] 주문 상태가 승인(ACCEPTED)이어야 한다.
+  - [ ] 주문 타입이 EAT_IN 또는 TAKEOUT이어야 한다.(코드 추가 필요)
   - [ ] 주문 상태가 승인(ACCEPTED)이면, 주문 상태는 서빙(SERVED)으로 변경된다.
+- [ ] 배달 시작
+  - [ ] 주문 타입이 DELIVERED여야만 한다.
+  - [ ] 주문 상태가 승인(ACCEPTED)이어야 한다.
+  - [ ] 주문 상태가 DELIVERING으로 변경 되어야 한다.
 
 ## 용어 사전
 
