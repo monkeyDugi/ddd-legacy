@@ -60,7 +60,8 @@ public class OrderService {
         // 주문은 여러 메뉴가 가능하기 때문에 루프
         for (final OrderLineItem orderLineItemRequest : orderLineItemRequests) {
             final long quantity = orderLineItemRequest.getQuantity();
-            // 먹고갈 경우 주문 메뉴 중 1개라도 0개 미만이면 안된다. 버그이다. 1개 미만으로 바껴야 한다.
+            // 먹고갈 경우 주문 메뉴 중 1개라도 0개 미만이면 안된다.
+            // 0개는 가능한데 잘못된 주문을 빼기 위해 0개까지 가능하다.
             if (type != OrderType.EAT_IN) {
                 if (quantity < 0) {
                     throw new IllegalArgumentException();
