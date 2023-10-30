@@ -104,7 +104,6 @@ public class OrderService {
         }
 
         if (type == OrderType.EAT_IN) {
-            // 먹고가려면 비어있는 테이블이 있어야 한다.
             final OrderTable orderTable = orderTableRepository.findById(request.getOrderTableId())
                 .orElseThrow(NoSuchElementException::new);
             if (!orderTable.isOccupied()) {
