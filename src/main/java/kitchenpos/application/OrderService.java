@@ -151,7 +151,7 @@ public class OrderService {
         if (order.getType() != OrderType.DELIVERY) {
             throw new IllegalStateException();
         }
-        // TODO-BD:  ACCEPTED 체크로 변경 필요.
+
         if (order.getStatus() != OrderStatus.SERVED) {
             throw new IllegalStateException();
         }
