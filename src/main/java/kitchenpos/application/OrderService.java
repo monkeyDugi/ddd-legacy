@@ -32,34 +32,49 @@ public class OrderService {
     @Transactional
     public Order create(final Order request) {
         final OrderType type = request.getType();
+        // 타입 필수
         if (Objects.isNull(type)) {
             throw new IllegalArgumentException();
         }
+
+        // 주문 메뉴 필수
         final List<OrderLineItem> orderLineItemRequests = request.getOrderLineItems();
         if (Objects.isNull(orderLineItemRequests) || orderLineItemRequests.isEmpty()) {
             throw new IllegalArgumentException();
         }
+
+        // 주문 메뉴 찾기
         final List<Menu> menus = menuRepository.findAllByIdIn(
             orderLineItemRequests.stream()
                 .map(OrderLineItem::getMenuId)
                 .collect(Collectors.toList())
         );
+
+        // 주문 메뉴가 실제 메뉴에 존재하지 않으면 주문 불가
         if (menus.size() != orderLineItemRequests.size()) {
             throw new IllegalArgumentException();
         }
+
+
         final List<OrderLineItem> orderLineItems = new ArrayList<>();
+        // 주문은 여러 메뉴가 가능하기 때문에 루프
         for (final OrderLineItem orderLineItemRequest : orderLineItemRequests) {
             final long quantity = orderLineItemRequest.getQuantity();
+            // 0개는 가능한데 잘못된 주문을 빼기 위해 0개까지 가능하다.
             if (type != OrderType.EAT_IN) {
                 if (quantity < 0) {
                     throw new IllegalArgumentException();
                 }
             }
+
+            // 존재하지 않는 메뉴 주문 불가
             final Menu menu = menuRepository.findById(orderLineItemRequest.getMenuId())
                 .orElseThrow(NoSuchElementException::new);
+            // 비활성된 메뉴 주문 불가
             if (!menu.isDisplayed()) {
                 throw new IllegalStateException();
             }
+            // 메뉴의 가격과 주문 메뉴의 가격이 다르면 주문 불가
             if (menu.getPrice().compareTo(orderLineItemRequest.getPrice()) != 0) {
                 throw new IllegalArgumentException();
             }
@@ -68,19 +83,25 @@ public class OrderService {
             orderLineItem.setQuantity(quantity);
             orderLineItems.add(orderLineItem);
         }
+
+        // 주문 대기 중이르 초기 셋팅
         Order order = new Order();
         order.setId(UUID.randomUUID());
         order.setType(type);
         order.setStatus(OrderStatus.WAITING);
         order.setOrderDateTime(LocalDateTime.now());
         order.setOrderLineItems(orderLineItems);
+
+        // 배달일 경우
         if (type == OrderType.DELIVERY) {
             final String deliveryAddress = request.getDeliveryAddress();
+            // 주소 필수
             if (Objects.isNull(deliveryAddress) || deliveryAddress.isEmpty()) {
                 throw new IllegalArgumentException();
             }
             order.setDeliveryAddress(deliveryAddress);
         }
+
         if (type == OrderType.EAT_IN) {
             final OrderTable orderTable = orderTableRepository.findById(request.getOrderTableId())
                 .orElseThrow(NoSuchElementException::new);
@@ -130,6 +151,7 @@ public class OrderService {
         if (order.getType() != OrderType.DELIVERY) {
             throw new IllegalStateException();
         }
+
         if (order.getStatus() != OrderStatus.SERVED) {
             throw new IllegalStateException();
         }
@@ -154,17 +176,22 @@ public class OrderService {
             .orElseThrow(NoSuchElementException::new);
         final OrderType type = order.getType();
         final OrderStatus status = order.getStatus();
+        // 배달인 경우 주문 상태는 배달 완료 상태여야 한다.
         if (type == OrderType.DELIVERY) {
             if (status != OrderStatus.DELIVERED) {
                 throw new IllegalStateException();
             }
         }
+        // 포장이거나 먹고갈 경우 주문 상태는 SERVED 상태여야 한다.
         if (type == OrderType.TAKEOUT || type == OrderType.EAT_IN) {
             if (status != OrderStatus.SERVED) {
                 throw new IllegalStateException();
             }
         }
+        // 이상 없으면 주문 상태는 완료로 변경
         order.setStatus(OrderStatus.COMPLETED);
+
+        // 매장 식사의 경우 모든 주문이 완료되어야만 테이블을 정리한다.
         if (type == OrderType.EAT_IN) {
             final OrderTable orderTable = order.getOrderTable();
             if (!orderRepository.existsByOrderTableAndStatusNot(orderTable, OrderStatus.COMPLETED)) {
