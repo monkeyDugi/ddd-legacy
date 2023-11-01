@@ -41,11 +41,12 @@ class ProductServiceTest {
     @Nested
     class 성공_케이스{
 
-        @Test
-        void 상품_등록하기() {
+        @ValueSource(ints = {0, 17_000})
+        @ParameterizedTest
+        void 상품_등록하기(int price) {
             // given
             Product product = new Product();
-            product.setPrice(BigDecimal.valueOf(17_000));
+            product.setPrice(BigDecimal.valueOf(price));
             product.setName("강정치킨");
 
             given(purgomalumClient.containsProfanity("강정치킨")).willReturn(Boolean.FALSE);
@@ -55,25 +56,7 @@ class ProductServiceTest {
 
             // then
             assertThat(actualProduct.getId()).isNotNull();
-            assertThat(actualProduct.getPrice()).isEqualTo(BigDecimal.valueOf(17_000));
-            assertThat(actualProduct.getName()).isEqualTo("강정치킨");
-        }
-
-        @Test
-        void 상품_등록하기_가격_0원() {
-            // given
-            Product product = new Product();
-            product.setPrice(BigDecimal.valueOf(0));
-            product.setName("강정치킨");
-
-            given(purgomalumClient.containsProfanity("강정치킨")).willReturn(Boolean.FALSE);
-
-            // when
-            Product actualProduct = sut.create(product);
-
-            // then
-            assertThat(actualProduct.getId()).isNotNull();
-            assertThat(actualProduct.getPrice()).isEqualTo(BigDecimal.valueOf(0));
+            assertThat(actualProduct.getPrice()).isEqualTo(BigDecimal.valueOf(price));
             assertThat(actualProduct.getName()).isEqualTo("강정치킨");
         }
     }
